@@ -1,10 +1,5 @@
 
--- [[ POLARIS V2.6 - MANUAL OVERRIDE EDITION ]]
-print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-print("POLARIS V2.6 ZAŁADOWANY POMYŚLNIE")
-print("JEŚLI WIDZISZ TEN NAPIS, MASZ NOWĄ WERSJĘ")
-print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
+-- [[ POLARIS V2.7 - DIRECT EXECUTION ]]
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
@@ -12,14 +7,14 @@ local Camera = workspace.CurrentCamera
 
 -- CAŁKOWITE CZYSZCZENIE GUI (ZABIJA WSZYSTKO CO BYŁO WCZEŚNIEJ)
 for _, v in pairs(game.CoreGui:GetChildren()) do
-    if v.Name:find("Polaris") or v:FindFirstChild("Main") then v:Destroy() end
+    if v.Name:find("Polaris") then v:Destroy() end
 end
 
 local Polaris = Instance.new("ScreenGui")
-Polaris.Name = "Polaris_V26_Final"
+Polaris.Name = "Polaris_V27"
 Polaris.Parent = game.CoreGui
 
--- Draggable
+-- Funkcja Draggable
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -54,7 +49,7 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 50); TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30); TopBar.Parent = Main; Instance.new("UICorner", TopBar)
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.6"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
+Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.7 (NUCLEAR FIX)"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
 
 -- SIDEBAR & CONTAINER
 local SideBar = Instance.new("Frame")
@@ -68,9 +63,8 @@ Container.Size = UDim2.new(1, -145, 1, -65); Container.Position = UDim2.new(0, 1
 _G.AimOn = false
 _G.EspOn = false
 _G.HitBoxOn = false
-_G.SpeedOn = false
 _G.TeamCheck = false
-_G.InvertTeam = false
+_G.InvertLogic = false
 
 -- TAB SYSTEM
 local function createTab(name, isFirst)
@@ -90,7 +84,6 @@ end
 
 local AimTab = createTab("Aim", true)
 local VisTab = createTab("Visuals", false)
-local MoveTab = createTab("Movement", false)
 local OthersTab = createTab("Others", false)
 
 -- TOGGLE
@@ -108,62 +101,56 @@ end
 createToggle("AimBot (Auto Lock)", AimTab, function(s) _G.AimOn = s end)
 createToggle("ESP Highlight", VisTab, function(s) _G.EspOn = s end)
 createToggle("HitBox Expander", VisTab, function(s) _G.HitBoxOn = s end)
-createToggle("Stealth Speed", MoveTab, function(s) _G.SpeedOn = s end)
 createToggle("Team Check", OthersTab, function(s) _G.TeamCheck = s end)
 
--- SPECIAL BUTTON (INVERT)
-local InvBtn = Instance.new("TextButton", OthersTab)
-InvBtn.Size = UDim2.new(1, -5, 0, 45); InvBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45); InvBtn.Text = "LOGIKA: NORMALNA"; InvBtn.TextColor3 = Color3.fromRGB(255, 255, 255); InvBtn.Font = Enum.Font.GothamBold; InvBtn.TextSize = 13
-Instance.new("UICorner", InvBtn)
-InvBtn.MouseButton1Click:Connect(function()
-    _G.InvertTeam = not _G.InvertTeam
-    InvBtn.Text = _G.InvertTeam and "LOGIKA: ODWRÓCONA" or "LOGIKA: NORMALNA"
-    InvBtn.BackgroundColor3 = _G.InvertTeam and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(40, 40, 45)
+-- FIX BUTTON
+local FixBtn = Instance.new("TextButton", OthersTab)
+FixBtn.Size = UDim2.new(1, -5, 0, 45); FixBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45); FixBtn.Text = "NAPRAW TEAMY (KLIKNIJ)"; FixBtn.TextColor3 = Color3.fromRGB(255, 255, 255); FixBtn.Font = Enum.Font.GothamBold; FixBtn.TextSize = 13
+Instance.new("UICorner", FixBtn)
+FixBtn.MouseButton1Click:Connect(function()
+    _G.InvertLogic = not _G.InvertLogic
+    FixBtn.Text = _G.InvertLogic and "TRYB: ODWRÓCONY" or "TRYB: NORMALNY"
+    FixBtn.BackgroundColor3 = _G.InvertLogic and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(40, 40, 45)
 end)
 
--- LOGIKA TEAMU
+-- LOGIKA WROGA
 local function isEnemy(v)
     if not _G.TeamCheck then return true end
-    local res = (v.Team ~= Player.Team or v.TeamColor ~= Player.TeamColor)
-    if _G.InvertTeam then return not res end
-    return res
+    local same = (v.Team == Player.Team or v.TeamColor == Player.TeamColor)
+    if _G.InvertLogic then return same end -- Jeśli odwrócone, traktuj "takich samych" jako wrogów
+    return not same
 end
 
--- RENDER LOOP
+-- LOOP
 RunService.RenderStepped:Connect(function()
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= Player and v.Character then
             local enemy = isEnemy(v)
-            local char = v.Character
-            
-            -- Visuals
-            if _G.HitBoxOn and enemy and char:FindFirstChild("Head") then
-                char.Head.Size = Vector3.new(4, 4, 4); char.Head.Transparency = 0.5
-            elseif char:FindFirstChild("Head") then
-                char.Head.Size = Vector3.new(1, 1, 1); char.Head.Transparency = 0
-            end
-
             if _G.EspOn and enemy then
-                if not char:FindFirstChild("PolH") then
-                    local h = Instance.new("Highlight", char); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0)
+                if not v.Character:FindFirstChild("PolH") then
+                    local h = Instance.new("Highlight", v.Character); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0)
                 end
             else
-                if char:FindFirstChild("PolH") then char.PolH:Destroy() end
+                if v.Character:FindFirstChild("PolH") then v.Character.PolH:Destroy() end
+            end
+            if _G.HitBoxOn and enemy and v.Character:FindFirstChild("Head") then
+                v.Character.Head.Size = Vector3.new(4,4,4); v.Character.Head.Transparency = 0.5
+            elseif v.Character:FindFirstChild("Head") then
+                v.Character.Head.Size = Vector3.new(1,1,1); v.Character.Head.Transparency = 0
             end
         end
     end
-
     if _G.AimOn then
-        local target = nil; local dist = 600
+        local t = nil; local d = 600
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= Player and p.Character and p.Character:FindFirstChild("Head") and isEnemy(p) then
                 local pos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
                 if vis then
                     local m = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
-                    if m < dist then target = p; dist = m end
+                    if m < d then t = p; d = m end
                 end
             end
         end
-        if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position) end
+        if t then Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Character.Head.Position) end
     end
 end)
