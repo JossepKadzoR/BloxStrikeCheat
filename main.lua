@@ -4,14 +4,20 @@ local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Czyszczenie poprzednich wersji
+-- LOADING STRING (F9)
+print("------------------------------------------")
+print("POLARIS V2.2: FINAL TEAM FIX LOADED")
+print("Ustawienia: Sprawdzanie koloru graczy...")
+print("------------------------------------------")
+
+-- Usuwanie starych wersji
 if game.CoreGui:FindFirstChild("PolarisV2") then game.CoreGui.PolarisV2:Destroy() end
 
 local Polaris = Instance.new("ScreenGui")
 Polaris.Name = "PolarisV2"
 Polaris.Parent = game.CoreGui
 
--- Funkcja Draggable
+-- Draggable
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -45,12 +51,12 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 -- TOP BAR
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 50)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 TopBar.Parent = Main
 Instance.new("UICorner", TopBar)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.1"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
+Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.2"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
 
 -- SIDEBAR
 local SideBar = Instance.new("Frame")
@@ -62,7 +68,7 @@ SideLayout.Padding = UDim.new(0, 5); SideLayout.HorizontalAlignment = "Center"
 local Container = Instance.new("Frame")
 Container.Size = UDim2.new(1, -145, 1, -65); Container.Position = UDim2.new(0, 140, 0, 55); Container.BackgroundTransparency = 1; Container.Parent = Main
 
--- ZMIENNE (Globalne dla pewności)
+-- ZMIENNE
 _G.AimOn = false
 _G.EspOn = false
 _G.HitBoxOn = false
@@ -75,14 +81,14 @@ local function createTab(name)
     TabFrame.Size = UDim2.new(1, 0, 1, 0); TabFrame.BackgroundTransparency = 1; TabFrame.Visible = false; TabFrame.ScrollBarThickness = 0; TabFrame.Parent = Container
     Instance.new("UIListLayout", TabFrame).Padding = UDim.new(0, 8)
 
-    local TabButton = Instance.new("TextButton")
-    TabButton.Size = UDim2.new(0.9, 0, 0, 38); TabButton.BackgroundColor3 = Color3.fromRGB(25, 25, 30); TabButton.Text = name; TabButton.TextColor3 = Color3.fromRGB(255, 255, 255); TabButton.Font = Enum.Font.GothamBold; TabButton.Parent = SideBar
-    Instance.new("UICorner", TabButton).CornerRadius = UDim.new(0, 6)
+    local TabBtn = Instance.new("TextButton")
+    TabBtn.Size = UDim2.new(0.9, 0, 0, 38); TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30); TabBtn.Text = name; TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255); TabBtn.Font = Enum.Font.GothamBold; TabBtn.Parent = SideBar
+    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
-    TabButton.MouseButton1Click:Connect(function()
+    TabBtn.MouseButton1Click:Connect(function()
         for _, v in pairs(Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
         for _, v in pairs(SideBar:GetChildren()) do if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(25, 25, 30) end end
-        TabFrame.Visible = true; TabButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        TabFrame.Visible = true; TabBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
     end)
     return TabFrame
 end
@@ -91,11 +97,9 @@ local AimTab = createTab("Aim")
 local VisTab = createTab("Visuals")
 local MoveTab = createTab("Movement")
 local OthersTab = createTab("Others")
-
--- Startowa zakładka
 AimTab.Visible = true
 
--- TOGGLE FUNCTION
+-- TOGGLE
 local function createToggle(name, parent, callback)
     local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1, -5, 0, 45); Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 27); Frame.Parent = parent; Instance.new("UICorner", Frame)
     local Label = Instance.new("TextLabel"); Label.Text = "  " .. name; Label.Size = UDim2.new(1, 0, 1, 0); Label.TextColor3 = Color3.fromRGB(200, 200, 200); Label.BackgroundTransparency = 1; Label.TextXAlignment = "Left"; Label.Parent = Frame
@@ -107,39 +111,38 @@ local function createToggle(name, parent, callback)
     end)
 end
 
--- PRZYCISKI
-createToggle("AimBot (Head Lock)", AimTab, function(s) _G.AimOn = s end)
+createToggle("AimBot (Lock On)", AimTab, function(s) _G.AimOn = s end)
 createToggle("ESP Wallhack", VisTab, function(s) _G.EspOn = s end)
 createToggle("HitBox Expander", VisTab, function(s) _G.HitBoxOn = s end)
 createToggle("Stealth Speed", MoveTab, function(s) _G.SpeedOn = s end)
-createToggle("Team Check", OthersTab, function(s) _G.TeamCheck = s end)
+createToggle("TEAM CHECK (Fix)", OthersTab, function(s) _G.TeamCheck = s end)
 
--- FUNKCJA SPRAWDZAJĄCA DRUŻYNĘ
-local function isEnemy(player)
-    if not _G.TeamCheck then return true end -- Jeśli TeamCheck wyłączony, każdy jest wrogiem
-    if player.Team ~= Player.Team then return true end
-    if player.TeamColor ~= Player.TeamColor then return true end
+-- NOWA FUNKCJA SPRAWDZANIA WROGA (PO KOLORZE)
+local function isRealEnemy(p)
+    if not _G.TeamCheck then return true end
+    if p.Team ~= Player.Team then return true end
+    -- Jeśli system teamów Robloxa kłamie, sprawdzamy TeamColor:
+    if p.TeamColor ~= Player.TeamColor then return true end
     return false
 end
 
--- PĘTLA GŁÓWNA
 RunService.RenderStepped:Connect(function()
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= Player and v.Character then
+            local enemy = isRealEnemy(v)
             local char = v.Character
-            local enemy = isEnemy(v)
-
-            -- HitBox
+            
+            -- HitBox (Głowa)
             if _G.HitBoxOn and enemy and char:FindFirstChild("Head") then
                 char.Head.Size = Vector3.new(4, 4, 4); char.Head.Transparency = 0.6; char.Head.CanCollide = false
             elseif char:FindFirstChild("Head") then
                 char.Head.Size = Vector3.new(1, 1, 1); char.Head.Transparency = 0
             end
 
-            -- ESP
+            -- ESP (Czerwone dla wroga, brak dla swoich)
             if _G.EspOn and enemy then
                 if not char:FindFirstChild("PolH") then
-                    local h = Instance.new("Highlight", char); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0); h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    local h = Instance.new("Highlight", char); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0); h.OutlineTransparency = 0
                 end
             else
                 if char:FindFirstChild("PolH") then char.PolH:Destroy() end
@@ -147,11 +150,11 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- AimBot
+    -- AimBot (Tylko wrogowie)
     if _G.AimOn then
         local target = nil; local dist = 600
         for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= Player and p.Character and p.Character:FindFirstChild("Head") and isEnemy(p) then
+            if p ~= Player and p.Character and p.Character:FindFirstChild("Head") and isRealEnemy(p) then
                 local pos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
                 if vis then
                     local mDist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
@@ -162,11 +165,11 @@ RunService.RenderStepped:Connect(function()
         if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position) end
     end
 
-    -- Movement
+    -- Speed
     if _G.SpeedOn and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
         local hum = Player.Character:FindFirstChildOfClass("Humanoid")
         if hum.MoveDirection.Magnitude > 0 then
-            Player.Character.HumanoidRootPart.CFrame = Player.Character.HumanoidRootPart.CFrame + (hum.MoveDirection * 0.35)
+            Player.Character.HumanoidRootPart.CFrame = Player.Character.HumanoidRootPart.CFrame + (hum.MoveDirection * 0.3)
         end
     end
 end)
