@@ -4,14 +4,14 @@ local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Usuwanie starych wersji
+-- Sprzątanie
 if game.CoreGui:FindFirstChild("PolarisV1") then game.CoreGui.PolarisV1:Destroy() end
 
 local Polaris = Instance.new("ScreenGui")
 Polaris.Name = "PolarisV1"
 Polaris.Parent = game.CoreGui
 
--- Funkcja Draggable
+-- Draggable Function
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -33,7 +33,7 @@ local function makeDraggable(frame)
     end)
 end
 
--- MAIN FRAME
+-- MAIN GUI
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 520, 0, 400)
 Main.Position = UDim2.new(0.5, -260, 0.5, -200)
@@ -50,39 +50,47 @@ TopBar.Parent = Main
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V1.8"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 24; Title.Parent = TopBar
+Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V1.8.5"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
 
--- SIDEBAR
+-- SIDEBAR (Z automatycznym układem)
 local SideBar = Instance.new("Frame")
 SideBar.Size = UDim2.new(0, 130, 1, -50); SideBar.Position = UDim2.new(0, 0, 0, 50); SideBar.BackgroundColor3 = Color3.fromRGB(18, 18, 22); SideBar.Parent = Main
+local SideLayout = Instance.new("UIListLayout", SideBar)
+SideLayout.Padding = UDim.new(0, 5); SideLayout.HorizontalAlignment = "Center"; SideLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
+-- CONTAINER
 local Container = Instance.new("Frame")
 Container.Size = UDim2.new(1, -145, 1, -65); Container.Position = UDim2.new(0, 140, 0, 55); Container.BackgroundTransparency = 1; Container.Parent = Main
 
 -- ZMIENNE
-local aimOn, espOn, teamCheckOn, speedOn, flyJumpOn = false, false, false, false, false
-local hitBoxSize = 2
+_G.AimOn = false
+_G.EspOn = false
+_G.HitBoxOn = false
+_G.TeamCheck = false
+_G.SpeedOn = false
 
 -- TAB SYSTEM
-local function createTab(name, pos)
+local function createTab(name, order)
     local Tab = Instance.new("ScrollingFrame")
-    Tab.Size = UDim2.new(1, 0, 1, 0); Tab.BackgroundTransparency = 1; Tab.Visible = (pos == 0); Tab.ScrollBarThickness = 0; Tab.Parent = Container
+    Tab.Size = UDim2.new(1, 0, 1, 0); Tab.BackgroundTransparency = 1; Tab.Visible = (order == 1); Tab.ScrollBarThickness = 0; Tab.Parent = Container
+    Instance.new("UIListLayout", Tab).Padding = UDim.new(0, 10)
+
     local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0.9, 0, 0, 35); Button.Position = UDim2.new(0.05, 0, 0, 15 + (pos * 42)); Button.BackgroundColor3 = (pos == 0) and Color3.fromRGB(0, 120, 215) or Color3.fromRGB(25, 25, 30); Button.Text = name; Button.TextColor3 = Color3.fromRGB(255, 255, 255); Button.Font = Enum.Font.GothamBold; Button.Parent = SideBar
+    Button.Size = UDim2.new(0.9, 0, 0, 35); Button.LayoutOrder = order; Button.BackgroundColor3 = (order == 1) and Color3.fromRGB(0, 120, 215) or Color3.fromRGB(25, 25, 30); Button.Text = name; Button.TextColor3 = Color3.fromRGB(255, 255, 255); Button.Font = Enum.Font.GothamBold; Button.Parent = SideBar
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+
     Button.MouseButton1Click:Connect(function()
-        for _, v in pairs(Container:GetChildren()) do v.Visible = false end
+        for _, v in pairs(Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
         for _, v in pairs(SideBar:GetChildren()) do if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(25, 25, 30) end end
         Tab.Visible = true; Button.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
     end)
-    Instance.new("UIListLayout", Tab).Padding = UDim.new(0, 10)
     return Tab
 end
 
-local AimTab = createTab("Aim", 0)
-local VisTab = createTab("Visuals", 1)
-local MoveTab = createTab("Movement", 2)
-local OthersTab = createTab("Others", 3)
+local AimTab = createTab("Aim", 1)
+local VisTab = createTab("Visuals", 2)
+local MoveTab = createTab("Movement", 3)
+local OthersTab = createTab("Others", 4)
 
 -- UI HELPERS
 local function createToggle(name, parent, callback)
@@ -96,54 +104,52 @@ local function createToggle(name, parent, callback)
     end)
 end
 
--- CONFIG
-createToggle("AimBot (Lock On)", AimTab, function(s) aimOn = s end)
-createToggle("ESP Boxes (Enemy)", VisTab, function(s) espOn = s end)
+-- CONFIGURATION
+createToggle("AimBot (Auto Lock)", AimTab, function(s) _G.AimOn = s end)
+createToggle("ESP Highlight (Enemy)", VisTab, function(s) _G.EspOn = s end)
 createToggle("HitBox Expander", VisTab, function(s) _G.HitBoxOn = s end)
-createToggle("Stealth Speed", MoveTab, function(s) speedOn = s end)
-createToggle("Low FlyJump", MoveTab, function(s) flyJumpOn = s end)
-createToggle("Team Check", OthersTab, function(s) teamCheckOn = s end)
+createToggle("Stealth Speed", MoveTab, function(s) _G.SpeedOn = s end)
+createToggle("Team Check", OthersTab, function(s) _G.TeamCheck = s end)
 
--- ESP & HitBox Logic
+-- MAIN LOGIC
 RunService.RenderStepped:Connect(function()
     for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+        if v ~= Player and v.Character then
             local char = v.Character
-            -- Team Check
-            local isEnemy = not (teamCheckOn and v.Team == Player.Team)
-            
-            -- HitBox Expander
-            if _G.HitBoxOn and isEnemy then
-                char.Head.Size = Vector3.new(hitBoxSize, hitBoxSize, hitBoxSize)
-                char.Head.Transparency = 0.5
+            local isEnemy = not (_G.TeamCheck and v.Team == Player.Team)
+
+            -- HitBox
+            if _G.HitBoxOn and isEnemy and char:FindFirstChild("Head") then
+                char.Head.Size = Vector3.new(3.5, 3.5, 3.5)
+                char.Head.Transparency = 0.6
                 char.Head.CanCollide = false
-            else
+            elseif char:FindFirstChild("Head") then
                 char.Head.Size = Vector3.new(1, 1, 1)
                 char.Head.Transparency = 0
             end
 
-            -- ESP Boxes
-            if espOn and isEnemy then
-                if not char:FindFirstChild("ESP_Box") then
-                    local b = Instance.new("BoxHandleAdornment", char)
-                    b.Name = "ESP_Box"; b.AlwaysOnTop = true; b.ZIndex = 10; b.Adornee = char.HumanoidRootPart; b.Size = Vector3.new(4, 6, 1); b.Transparency = 0.6; b.Color3 = Color3.fromRGB(255, 0, 0)
+            -- ESP Highlight
+            if _G.EspOn and isEnemy then
+                if not char:FindFirstChild("PolarisHighlight") then
+                    local h = Instance.new("Highlight", char)
+                    h.Name = "PolarisHighlight"; h.FillColor = Color3.fromRGB(255, 0, 0); h.OutlineColor = Color3.fromRGB(255, 255, 255)
                 end
             else
-                if char:FindFirstChild("ESP_Box") then char.ESP_Box:Destroy() end
+                if char:FindFirstChild("PolarisHighlight") then char.PolarisHighlight:Destroy() end
             end
         end
     end
 
-    -- AimBot Re-Code
-    if aimOn then
+    -- AimBot
+    if _G.AimOn then
         local target = nil
         local dist = math.huge
         for _, p in pairs(game.Players:GetPlayers()) do
             if p ~= Player and p.Character and p.Character:FindFirstChild("Head") then
-                if teamCheckOn and p.Team == Player.Team then continue end
+                if _G.TeamCheck and p.Team == Player.Team then continue end
                 local pos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
                 if vis then
-                    local mDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Player:GetMouse().X, Player:GetMouse().Y)).Magnitude
+                    local mDist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
                     if mDist < dist then target = p; dist = mDist end
                 end
             end
@@ -152,19 +158,12 @@ RunService.RenderStepped:Connect(function()
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
         end
     end
-end)
 
--- Movement Logic (Bypass)
-RunService.Heartbeat:Connect(function()
-    local char = Player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local root = char.HumanoidRootPart
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if speedOn and hum.MoveDirection.Magnitude > 0 then
-            root.CFrame = root.CFrame + (hum.MoveDirection * 0.3)
-        end
-        if flyJumpOn and hum.Jump then
-            root.Velocity = Vector3.new(root.Velocity.X, 30, root.Velocity.Z)
+    -- Speed
+    if _G.SpeedOn and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+        local hum = Player.Character:FindFirstChildOfClass("Humanoid")
+        if hum.MoveDirection.Magnitude > 0 then
+            Player.Character.HumanoidRootPart.CFrame = Player.Character.HumanoidRootPart.CFrame + (hum.MoveDirection * 0.35)
         end
     end
 end)
