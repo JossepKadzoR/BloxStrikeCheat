@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Usuwanie starych wersji
+-- Sprzątanie GUI
 for _, v in pairs(game.CoreGui:GetChildren()) do
     if v.Name:find("Polaris") then v:Destroy() end
 end
@@ -13,7 +13,7 @@ local Polaris = Instance.new("ScreenGui")
 Polaris.Name = "PolarisV2_Final"
 Polaris.Parent = game.CoreGui
 
--- Draggable
+-- Funkcja Draggable
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -48,14 +48,13 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 50); TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 30); TopBar.Parent = Main; Instance.new("UICorner", TopBar)
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.5 (TEAM FIX)"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
+Title.Size = UDim2.new(1, 0, 1, 0); Title.BackgroundTransparency = 1; Title.Text = "POLARIS V2.6 (TEAM FIX)"; Title.TextColor3 = Color3.fromRGB(0, 162, 255); Title.Font = Enum.Font.GothamBlack; Title.TextSize = 22; Title.Parent = TopBar
 
--- SIDEBAR
+-- SIDEBAR & CONTAINER
 local SideBar = Instance.new("Frame")
 SideBar.Size = UDim2.new(0, 130, 1, -50); SideBar.Position = UDim2.new(0, 0, 0, 50); SideBar.BackgroundColor3 = Color3.fromRGB(18, 18, 22); SideBar.Parent = Main
 local SideLayout = Instance.new("UIListLayout", SideBar); SideLayout.Padding = UDim.new(0, 5); SideLayout.HorizontalAlignment = "Center"
 
--- CONTAINER
 local Container = Instance.new("Frame")
 Container.Size = UDim2.new(1, -145, 1, -65); Container.Position = UDim2.new(0, 140, 0, 55); Container.BackgroundTransparency = 1; Container.Parent = Main
 
@@ -65,17 +64,16 @@ _G.EspOn = false
 _G.HitBoxOn = false
 _G.SpeedOn = false
 _G.TeamCheck = false
+_G.InvertTeam = false -- Odwrócenie logiki wrogów
 
 -- TABS
 local function createTab(name, isFirst)
     local TabFrame = Instance.new("ScrollingFrame")
     TabFrame.Size = UDim2.new(1, 0, 1, 0); TabFrame.BackgroundTransparency = 1; TabFrame.Visible = isFirst; TabFrame.ScrollBarThickness = 0; TabFrame.Parent = Container
     Instance.new("UIListLayout", TabFrame).Padding = UDim.new(0, 8)
-    
     local TabBtn = Instance.new("TextButton")
     TabBtn.Size = UDim2.new(0.9, 0, 0, 38); TabBtn.BackgroundColor3 = isFirst and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(25, 25, 30); TabBtn.Text = name; TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255); TabBtn.Font = Enum.Font.GothamBold; TabBtn.Parent = SideBar
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
-    
     TabBtn.MouseButton1Click:Connect(function()
         for _, v in pairs(Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
         for _, v in pairs(SideBar:GetChildren()) do if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(25, 25, 30) end end
@@ -89,7 +87,7 @@ local VisTab = createTab("Visuals", false)
 local MoveTab = createTab("Movement", false)
 local OthersTab = createTab("Others", false)
 
--- TOGGLE
+-- TOGGLE CREATOR
 local function createToggle(name, parent, callback)
     local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1, -5, 0, 45); Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 27); Frame.Parent = parent; Instance.new("UICorner", Frame)
     local Label = Instance.new("TextLabel"); Label.Text = "  " .. name; Label.Size = UDim2.new(1, 0, 1, 0); Label.TextColor3 = Color3.fromRGB(200, 200, 200); Label.BackgroundTransparency = 1; Label.TextXAlignment = "Left"; Label.Parent = Frame
@@ -105,25 +103,33 @@ createToggle("AimBot (Auto Lock)", AimTab, function(s) _G.AimOn = s end)
 createToggle("ESP Highlight", VisTab, function(s) _G.EspOn = s end)
 createToggle("HitBox Expander", VisTab, function(s) _G.HitBoxOn = s end)
 createToggle("Stealth Speed", MoveTab, function(s) _G.SpeedOn = s end)
-createToggle("Team Check (Fix)", OthersTab, function(s) _G.TeamCheck = s end)
+createToggle("Team Check", OthersTab, function(s) _G.TeamCheck = s end)
 
--- FUNKCJA SPRAWDZAJĄCA WROGA (ZABEZPIECZONA)
+-- SPECIAL BUTTON FOR INVERT
+local InvBtn = Instance.new("TextButton", OthersTab)
+InvBtn.Size = UDim2.new(1, -5, 0, 45); InvBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40); InvBtn.Text = "LOGIKA: NORMALNA"; InvBtn.TextColor3 = Color3.fromRGB(255, 255, 255); InvBtn.Font = Enum.Font.GothamBold; InvBtn.TextSize = 13
+Instance.new("UICorner", InvBtn)
+InvBtn.MouseButton1Click:Connect(function()
+    _G.InvertTeam = not _G.InvertTeam
+    InvBtn.Text = _G.InvertTeam and "LOGIKA: ODWRÓCONA" or "LOGIKA: NORMALNA"
+    InvBtn.BackgroundColor3 = _G.InvertTeam and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(35, 35, 40)
+end)
+
+-- FUNKCJA SPRAWDZAJĄCA WROGA
 local function isEnemy(v)
     if not _G.TeamCheck then return true end
     
-    -- Metoda 1: Standardowe Teamy
-    if v.Team ~= nil and Player.Team ~= nil then
-        if v.Team ~= Player.Team then return true end
-        return false
-    end
-    
-    -- Metoda 2: TeamColor (Gry typu Blox Strike)
-    if v.TeamColor ~= Player.TeamColor then
-        return true
+    local res = false
+    -- Sprawdzanie drużyny i koloru
+    if v.Team ~= Player.Team or v.TeamColor ~= Player.TeamColor then
+        res = true
     end
 
-    -- Jeśli wszystko inne zawiedzie, traktuj jako wroga (żeby ESP nie znikało)
-    return false 
+    -- Odwrócenie logiki, jeśli przycisk został kliknięty
+    if _G.InvertTeam then
+        return not res
+    end
+    return res
 end
 
 -- LOGIKA GŁÓWNA
@@ -135,20 +141,15 @@ RunService.RenderStepped:Connect(function()
             
             -- HitBox
             if _G.HitBoxOn and enemy and char:FindFirstChild("Head") then
-                char.Head.Size = Vector3.new(4, 4, 4); char.Head.Transparency = 0.5; char.Head.CanCollide = false
+                char.Head.Size = Vector3.new(4, 4, 4); char.Head.Transparency = 0.5
             elseif char:FindFirstChild("Head") then
                 char.Head.Size = Vector3.new(1, 1, 1); char.Head.Transparency = 0
             end
 
             -- ESP
-            if _G.EspOn then
-                if enemy then
-                    if not char:FindFirstChild("PolH") then
-                        local h = Instance.new("Highlight", char); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0); h.OutlineColor = Color3.fromRGB(255,255,255)
-                    end
-                else
-                    -- Usuń ESP z sojusznika jeśli TeamCheck jest ON
-                    if _G.TeamCheck and char:FindFirstChild("PolH") then char.PolH:Destroy() end
+            if _G.EspOn and enemy then
+                if not char:FindFirstChild("PolH") then
+                    local h = Instance.new("Highlight", char); h.Name = "PolH"; h.FillColor = Color3.fromRGB(255, 0, 0)
                 end
             else
                 if char:FindFirstChild("PolH") then char.PolH:Destroy() end
