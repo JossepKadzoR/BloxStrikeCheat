@@ -2,11 +2,17 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 
-local Polaris = Instance.new("ScreenGui")
-Polaris.Name = "PolarisV1_Pro"
-Polaris.Parent = game.CoreGui
+-- Usunięcie starego GUI jeśli istnieje
+if game.CoreGui:FindFirstChild("PolarisV1") then
+    game.CoreGui.PolarisV1:Destroy()
+end
 
--- Funkcja Draggable (Przesuwanie)
+local Polaris = Instance.new("ScreenGui")
+Polaris.Name = "PolarisV1"
+Polaris.Parent = game.CoreGui
+Polaris.ResetOnSpawn = false
+
+-- Funkcja Draggable (Przesuwanie okna)
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -28,7 +34,7 @@ local function makeDraggable(frame)
     end)
 end
 
--- UI Setup (Styl 1:1 ze zdjęcia)
+-- GUI Main Frame
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 550, 0, 350)
 Main.Position = UDim2.new(0.5, -275, 0.5, -175)
@@ -38,11 +44,21 @@ Main.Parent = Polaris
 makeDraggable(Main)
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
+-- Sidebar
 local SideBar = Instance.new("Frame")
 SideBar.Size = UDim2.new(0, 160, 1, 0)
 SideBar.BackgroundColor3 = Color3.fromRGB(20, 20, 23)
 SideBar.Parent = Main
 Instance.new("UICorner", SideBar).CornerRadius = UDim.new(0, 10)
+
+local Logo = Instance.new("TextLabel")
+Logo.Text = "POLARIS V1"
+Logo.Size = UDim2.new(1, 0, 0, 60)
+Logo.TextColor3 = Color3.fromRGB(0, 162, 255)
+Logo.Font = Enum.Font.GothamBlack
+Logo.TextSize = 22
+Logo.BackgroundTransparency = 1
+Logo.Parent = SideBar
 
 local Container = Instance.new("Frame")
 Container.Size = UDim2.new(1, -170, 1, -20)
@@ -50,7 +66,7 @@ Container.Position = UDim2.new(0, 165, 0, 10)
 Container.BackgroundTransparency = 1
 Container.Parent = Main
 
--- Funkcja Tworzenia Zakładek
+-- Tab System
 local function createTab(name, pos)
     local Tab = Instance.new("ScrollingFrame")
     Tab.Size = UDim2.new(1, 0, 1, 0)
@@ -72,20 +88,31 @@ local function createTab(name, pos)
     Button.MouseButton1Click:Connect(function()
         for _, v in pairs(Container:GetChildren()) do v.Visible = false end
         Tab.Visible = true
+        for _, v in pairs(SideBar:GetChildren()) do 
+            if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(30, 30, 35) end 
+        end
+        Button.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
     end)
     return Tab
 end
 
 local AimTab = createTab("Aim", 0)
 local MoveTab = createTab("Movement", 1)
+local VisTab = createTab("Visuals", 2)
 
--- FUNKCJA TOGGLE (Przełącznik)
+-- Toggle Function
 local function createToggle(name, parent, callback)
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, -10, 0, 50)
     Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
     Frame.Parent = parent
+    Instance.new("UIListLayout", Frame).Padding = UDim.new(0, 5) -- Aby elementy pod sobą nie nachodziły
     Instance.new("UICorner", Frame)
+
+    local Inner = Instance.new("Frame")
+    Inner.Size = UDim2.new(1, 0, 0, 50)
+    Inner.BackgroundTransparency = 1
+    Inner.Parent = Frame
 
     local Label = Instance.new("TextLabel")
     Label.Text = "  " .. name
@@ -93,14 +120,14 @@ local function createToggle(name, parent, callback)
     Label.TextColor3 = Color3.fromRGB(200, 200, 200)
     Label.BackgroundTransparency = 1
     Label.TextXAlignment = "Left"
-    Label.Parent = Frame
+    Label.Parent = Inner
 
     local Btn = Instance.new("TextButton")
     Btn.Size = UDim2.new(0, 45, 0, 24)
     Btn.Position = UDim2.new(1, -55, 0.5, -12)
     Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
     Btn.Text = ""
-    Btn.Parent = Frame
+    Btn.Parent = Inner
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
 
     local Circle = Instance.new("Frame")
@@ -119,13 +146,13 @@ local function createToggle(name, parent, callback)
     end)
 end
 
--- FUNKCJA SLIDER (Suwak prędkości)
+-- Slider Function
 local function createSlider(name, parent, min, max, default, callback)
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(1, -10, 0, 60)
-    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    Frame.Parent = parent
-    Instance.new("UICorner", Frame)
+    local SliderFrame = Instance.new("Frame")
+    SliderFrame.Size = UDim2.new(1, -10, 0, 65)
+    SliderFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    SliderFrame.Parent = parent
+    Instance.new("UICorner", SliderFrame)
 
     local Label = Instance.new("TextLabel")
     Label.Text = "  " .. name .. ": " .. default
@@ -133,13 +160,13 @@ local function createSlider(name, parent, min, max, default, callback)
     Label.TextColor3 = Color3.fromRGB(200, 200, 200)
     Label.BackgroundTransparency = 1
     Label.TextXAlignment = "Left"
-    Label.Parent = Frame
+    Label.Parent = SliderFrame
 
     local SliderBack = Instance.new("Frame")
     SliderBack.Size = UDim2.new(0.9, 0, 0, 6)
     SliderBack.Position = UDim2.new(0.05, 0, 0.7, 0)
     SliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-    SliderBack.Parent = Frame
+    SliderBack.Parent = SliderFrame
     Instance.new("UICorner", SliderBack)
 
     local Fill = Instance.new("Frame")
@@ -171,24 +198,22 @@ local function createSlider(name, parent, min, max, default, callback)
     end)
 end
 
--- LOGIKA DZIAŁANIA
-local speedEnabled = false
-local currentSpeed = 50
+-- LOGIKA MOVEMENT
+local speedActive = false
+local walkSpeedValue = 50
 
 createToggle("Speed Hack", MoveTab, function(state)
-    speedEnabled = state
+    speedActive = state
 end)
 
-createSlider("Szybkość", MoveTab, 16, 200, 50, function(val)
-    currentSpeed = val
+createSlider("Moc Szybkości", MoveTab, 16, 300, 50, function(val)
+    walkSpeedValue = val
 end)
 
--- Pętla wymuszająca prędkość
-RunService.Heartbeat:Connect(function()
-    if speedEnabled and Player.Character and Player.Character:FindFirstChild("Humanoid") then
-        Player.Character.Humanoid.WalkSpeed = currentSpeed
-    elseif not speedEnabled and Player.Character and Player.Character:FindFirstChild("Humanoid") then
-        -- Jeśli wyłączone, nie dotykamy prędkości (pozwalamy grze wrócić do 16)
+-- Pętla "Brute Force" na szybkość - działa nawet jeśli gra próbuje nas spowolnić
+RunService.Stepped:Connect(function()
+    if speedActive and Player.Character and Player.Character:FindFirstChild("Humanoid") then
+        Player.Character.Humanoid.WalkSpeed = walkSpeedValue
     end
 end)
 
