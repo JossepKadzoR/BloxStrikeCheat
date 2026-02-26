@@ -2,7 +2,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Player = game.Players.LocalPlayer
 
--- Usunięcie starego GUI jeśli istnieje
+-- Usuwanie starego GUI
 if game.CoreGui:FindFirstChild("PolarisV1") then
     game.CoreGui.PolarisV1:Destroy()
 end
@@ -10,9 +10,8 @@ end
 local Polaris = Instance.new("ScreenGui")
 Polaris.Name = "PolarisV1"
 Polaris.Parent = game.CoreGui
-Polaris.ResetOnSpawn = false
 
--- Funkcja Draggable (Przesuwanie okna)
+-- Funkcja Draggable
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
@@ -34,17 +33,16 @@ local function makeDraggable(frame)
     end)
 end
 
--- GUI Main Frame
+-- Main Frame
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 550, 0, 350)
-Main.Position = UDim2.new(0.5, -275, 0.5, -175)
+Main.Size = UDim2.new(0, 550, 0, 380) -- Trochę wyższy żeby wszystko weszło
+Main.Position = UDim2.new(0.5, -275, 0.5, -190)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-Main.BorderSizePixel = 0
 Main.Parent = Polaris
 makeDraggable(Main)
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
--- Sidebar
+-- Sidebar & Logo
 local SideBar = Instance.new("Frame")
 SideBar.Size = UDim2.new(0, 160, 1, 0)
 SideBar.BackgroundColor3 = Color3.fromRGB(20, 20, 23)
@@ -72,7 +70,8 @@ local function createTab(name, pos)
     Tab.Size = UDim2.new(1, 0, 1, 0)
     Tab.BackgroundTransparency = 1
     Tab.Visible = false
-    Tab.ScrollBarThickness = 0
+    Tab.CanvasSize = UDim2.new(0, 0, 1.5, 0)
+    Tab.ScrollBarThickness = 2
     Tab.Parent = Container
     
     local Button = Instance.new("TextButton")
@@ -88,31 +87,24 @@ local function createTab(name, pos)
     Button.MouseButton1Click:Connect(function()
         for _, v in pairs(Container:GetChildren()) do v.Visible = false end
         Tab.Visible = true
-        for _, v in pairs(SideBar:GetChildren()) do 
-            if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(30, 30, 35) end 
-        end
-        Button.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
     end)
     return Tab
 end
 
 local AimTab = createTab("Aim", 0)
 local MoveTab = createTab("Movement", 1)
-local VisTab = createTab("Visuals", 2)
 
--- Toggle Function
+-- Layout w zakładkach
+local MoveLayout = Instance.new("UIListLayout", MoveTab)
+MoveLayout.Padding = UDim.new(0, 10)
+
+-- Toggle & Slider Builder
 local function createToggle(name, parent, callback)
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(1, -10, 0, 50)
     Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
     Frame.Parent = parent
-    Instance.new("UIListLayout", Frame).Padding = UDim.new(0, 5) -- Aby elementy pod sobą nie nachodziły
     Instance.new("UICorner", Frame)
-
-    local Inner = Instance.new("Frame")
-    Inner.Size = UDim2.new(1, 0, 0, 50)
-    Inner.BackgroundTransparency = 1
-    Inner.Parent = Frame
 
     local Label = Instance.new("TextLabel")
     Label.Text = "  " .. name
@@ -120,14 +112,14 @@ local function createToggle(name, parent, callback)
     Label.TextColor3 = Color3.fromRGB(200, 200, 200)
     Label.BackgroundTransparency = 1
     Label.TextXAlignment = "Left"
-    Label.Parent = Inner
+    Label.Parent = Frame
 
     local Btn = Instance.new("TextButton")
     Btn.Size = UDim2.new(0, 45, 0, 24)
     Btn.Position = UDim2.new(1, -55, 0.5, -12)
     Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
     Btn.Text = ""
-    Btn.Parent = Inner
+    Btn.Parent = Frame
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
 
     local Circle = Instance.new("Frame")
@@ -146,13 +138,12 @@ local function createToggle(name, parent, callback)
     end)
 end
 
--- Slider Function
 local function createSlider(name, parent, min, max, default, callback)
-    local SliderFrame = Instance.new("Frame")
-    SliderFrame.Size = UDim2.new(1, -10, 0, 65)
-    SliderFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    SliderFrame.Parent = parent
-    Instance.new("UICorner", SliderFrame)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, -10, 0, 60)
+    Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    Frame.Parent = parent
+    Instance.new("UICorner", Frame)
 
     local Label = Instance.new("TextLabel")
     Label.Text = "  " .. name .. ": " .. default
@@ -160,62 +151,62 @@ local function createSlider(name, parent, min, max, default, callback)
     Label.TextColor3 = Color3.fromRGB(200, 200, 200)
     Label.BackgroundTransparency = 1
     Label.TextXAlignment = "Left"
-    Label.Parent = SliderFrame
+    Label.Parent = Frame
 
     local SliderBack = Instance.new("Frame")
     SliderBack.Size = UDim2.new(0.9, 0, 0, 6)
     SliderBack.Position = UDim2.new(0.05, 0, 0.7, 0)
     SliderBack.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-    SliderBack.Parent = SliderFrame
-    Instance.new("UICorner", SliderBack)
+    SliderBack.Parent = Frame
 
     local Fill = Instance.new("Frame")
     Fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
     Fill.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
     Fill.Parent = SliderBack
-    Instance.new("UICorner", Fill)
 
+    local dragging = false
     local function update()
-        local mousePos = UserInputService:GetMouseLocation().X
-        local framePos = SliderBack.AbsolutePosition.X
-        local frameSize = SliderBack.AbsoluteSize.X
-        local percentage = math.clamp((mousePos - framePos) / frameSize, 0, 1)
-        Fill.Size = UDim2.new(percentage, 0, 1, 0)
-        local val = math.floor(min + (max - min) * percentage)
+        local mX = UserInputService:GetMouseLocation().X
+        local per = math.clamp((mX - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+        Fill.Size = UDim2.new(per, 0, 1, 0)
+        local val = math.floor(min + (max-min)*per)
         Label.Text = "  " .. name .. ": " .. val
         callback(val)
     end
-
-    local dragging = false
-    SliderBack.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; update() end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update() end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
+    SliderBack.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true update() end end)
+    UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then update() end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
 -- LOGIKA MOVEMENT
 local speedActive = false
+local flyJumpActive = false
 local walkSpeedValue = 50
 
-createToggle("Speed Hack", MoveTab, function(state)
-    speedActive = state
+createToggle("Speed Hack", MoveTab, function(s) speedActive = s end)
+createSlider("Moc Szybkości", MoveTab, 16, 300, 50, function(v) walkSpeedValue = v end)
+
+createToggle("FlyJump (Mega Jump)", MoveTab, function(s) 
+    flyJumpActive = s 
 end)
 
-createSlider("Moc Szybkości", MoveTab, 16, 300, 50, function(val)
-    walkSpeedValue = val
-end)
-
--- Pętla "Brute Force" na szybkość - działa nawet jeśli gra próbuje nas spowolnić
+-- Pętla obsługująca Speed i FlyJump
 RunService.Stepped:Connect(function()
-    if speedActive and Player.Character and Player.Character:FindFirstChild("Humanoid") then
-        Player.Character.Humanoid.WalkSpeed = walkSpeedValue
+    local char = Player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        -- Speed Logic
+        if speedActive or flyJumpActive then
+            char.Humanoid.WalkSpeed = flyJumpActive and 150 or walkSpeedValue
+        end
+        
+        -- FlyJump Logic
+        if flyJumpActive then
+            char.Humanoid.JumpPower = 100 -- Wysokość skoku
+            if char.Humanoid.FloorMaterial ~= Enum.Material.Air then
+                char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
     end
 end)
 
--- Startowa zakładka
 AimTab.Visible = true
